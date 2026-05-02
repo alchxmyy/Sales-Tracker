@@ -1,19 +1,116 @@
-let currentTarget = 100; // Temporary default, will be updated from sheet
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sales Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            padding: 50px;
+            background: #667eea;
+        }
+        .box {
+            background: white;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 40px;
+            border-radius: 20px;
+        }
+        .number {
+            font-size: 72px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 20px;
+        }
+        button {
+            font-size: 24px;
+            padding: 15px 30px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background: #4CAF50;
+            color: white;
+        }
+        .reset {
+            background: #f44336;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+        }
+        .progress-container {
+            margin: 20px 0;
+        }
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .progress-bar-bg {
+            background: #e0e0e0;
+            border-radius: 25px;
+            overflow: hidden;
+            height: 30px;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            width: 0%;
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        .target-info {
+            color: #666;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h1>📊 Insurance Sales</h1>
+    <div class="target-info" id="targetInfo">Loading target...</div>
+    
+    <div class="progress-container">
+        <div class="progress-stats">
+            <span>Progress</span>
+            <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressBar">0%</div>
+        </div>
+    </div>
+    
+    <div class="number"><span id="sales">--</span> / <span id="targetNumber">--</span></div>
+    
+    <button onclick="addOne()">+1 Sale</button>
+    <button class="reset" onclick="resetSales()">Reset</button>
+    <div id="status" class="status"></div>
+</div>
+
+<script>
+    // IMPORTANT: Replace with YOUR actual Google Apps Script URL
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQwEIm9sG_2uVktVeWiaVq4VDYJhihwSu0K5nRKlfozGqAQ7AnEQEyTjIc1ZrmAbTg/exec';
+    
+    let currentTarget = 100;
     let currentSales = 0;
     
     async function loadTarget() {
         try {
             const response = await fetch(SCRIPT_URL + '?action=target');
             currentTarget = parseInt(await response.text());
-            // Update target display
             document.getElementById('targetInfo').innerText = 'Monthly Target: ' + currentTarget + ' policies';
             document.getElementById('targetNumber').innerText = currentTarget;
-            // After loading target, load sales
             loadSales();
         } catch(error) {
             console.error('Error loading target:', error);
             document.getElementById('targetInfo').innerText = 'Error loading target';
-            // Still try to load sales with default target
             loadSales();
         }
     }
@@ -64,5 +161,7 @@ let currentTarget = 100; // Temporary default, will be updated from sheet
         }
     }
     
-    // Start by loading the target from Google Sheet
     loadTarget();
+</script>
+</body>
+</html>
