@@ -248,7 +248,7 @@
     border-radius: 10px;
     cursor: pointer;
     margin: 10px;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
     background: white;
     border: 2px solid;
     position: relative;
@@ -259,11 +259,13 @@
     height: 60px;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
+    /* Force hardware acceleration */
+    transform: translateZ(0);
 }
 
 .btn-add span {
     display: inline-block;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.1s ease;
     z-index: 1;
     position: relative;
 }
@@ -279,7 +281,7 @@
     background-size: 150%;
     background-repeat: no-repeat;
     background-position: center;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.1s ease;
     opacity: 0;
     pointer-events: none;
     border-radius: 8px;
@@ -301,9 +303,10 @@
     }
 }
 
-/* Mobile tap effect */
+/* Mobile tap effect - brief only */
 .btn-add:active {
     transform: scale(0.97);
+    background: var(--theme-primary, #E3000F) !important;
 }
 
 .btn-add:active span {
@@ -312,6 +315,20 @@
 
 .btn-add:active::after {
     opacity: 1;
+}
+
+/* Force reset after any interaction */
+.btn-add:focus, .btn-add:focus-visible {
+    outline: none;
+    background: white !important;
+}
+
+.btn-add:focus span, .btn-add:focus-visible span {
+    opacity: 1;
+}
+
+.btn-add:focus::after, .btn-add:focus-visible::after {
+    opacity: 0;
 }
 
 .name-btn {
@@ -775,6 +792,10 @@
     
     const btn = document.getElementById('addButton');
     
+    // Store original colors before any change
+    const originalBorderColor = currentTheme.primary;
+    const originalColor = currentTheme.primary;
+    
     try {
         const response = await fetch(SCRIPT_URL + '?action=add&name=' + encodeURIComponent(currentUser));
         const result = await response.text();
@@ -798,14 +819,27 @@
         document.getElementById('status').style.background = '#f8d7da';
     }
     
-    // Reset button visual after tap (for mobile)
+    // Force reset the button after tap
     setTimeout(() => {
         if (btn) {
+            // Force remove any active/pressed state
             btn.style.transform = '';
+            btn.style.background = 'white';
+            btn.style.borderColor = currentTheme.primary;
+            btn.style.color = currentTheme.primary;
+            
             const span = btn.querySelector('span');
-            if (span) span.style.opacity = '';
+            if (span) {
+                span.style.opacity = '1';
+            }
+            
+            // Force a reflow to clear any stuck states
+            void btn.offsetHeight;
+            
+            // Remove focus from button
+            btn.blur();
         }
-    }, 200);
+    }, 150);
 }
     
     function logout() {
