@@ -110,7 +110,7 @@
 <body>
     <div class="container">
         <h1> Kassa - Service Verzekeringen </h1>
-        <div class="target-info">Maandtarget 100 verzekeringen</div>
+        <div class="target-info">Maandtarget 15 verzekeringen</div>
 
          <div class="progress-container">
             <div class="progress-stats">
@@ -123,7 +123,7 @@
         </div>
 
         <div class="sales-number">
-            <span id="currentSales">--</span> / 100
+            <span id="currentSales">--</span> / 15
         </div>
         
         <div>
@@ -152,7 +152,7 @@
                 document.getElementById('currentSales').innerText = sales;
                 
                 // Update progress bar
-                const percent = (sales / 100) * 100;
+                const percent = (sales / 15) * 15;
                 document.getElementById('progressPercent').innerText = `${percent.toFixed(1)}%`;
                 document.getElementById('progressBar').style.width = `${percent}%`;
                 document.getElementById('progressBar').innerText = `${percent.toFixed(1)}%`;
