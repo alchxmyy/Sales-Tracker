@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sales Tracker - Pizza Goal! 🍕</title>
+    <title>Verzekerings Tracker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
@@ -18,7 +18,6 @@
             transition: all 0.3s ease;
         }
         
-        /* Default background (will be overridden by person theme) */
         body::before {
             content: "";
             position: fixed;
@@ -34,10 +33,25 @@
             z-index: 0;
         }
         
-        /* Loading Spinner Animation */
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pizzaRain {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
         }
         
         .loading-spinner {
@@ -61,30 +75,12 @@
             font-size: 14px;
         }
         
-        /* Content hidden until loaded */
         .content-hidden {
             display: none;
         }
         
         .content-visible {
             display: block;
-        }
-        
-        /* Pizza Celebration Animation */
-        @keyframes pizzaRain {
-            0% {
-                transform: translateY(-100px) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
         }
         
         .pizza-emoji {
@@ -100,7 +96,6 @@
             display: inline-block;
         }
         
-        /* Welcome Screen */
         .welcome-screen {
             display: flex;
             justify-content: center;
@@ -133,7 +128,6 @@
             margin-top: 20px;
         }
         
-        /* ALL name buttons have the SAME standard red color on welcome screen */
         .name-btn {
             padding: 12px;
             font-size: 16px;
@@ -159,7 +153,6 @@
             box-shadow: 0 5px 15px rgba(227,0,15,0.3);
         }
         
-        /* Main App */
         .main-app {
             display: none;
             max-width: 600px;
@@ -206,37 +199,38 @@
         }
         
         .pizza-title {
-            font-size: 24px;
-            margin-bottom: 10px;
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: normal;
         }
         
         .pizza-progress-container {
-            background: #f0e6d2;
-            border-radius: 30px;
-            padding: 5px;
+            background: #f0f0f0;
+            border-radius: 25px;
+            padding: 3px;
             margin: 20px 0;
-            border: 2px solid #d4a373;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
         
         .pizza-progress-bar {
-            background: linear-gradient(90deg, #ff6b35, #ff8c42, #ffaa00);
-            height: 40px;
-            border-radius: 25px;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            height: 35px;
+            border-radius: 22px;
             width: 0%;
             transition: width 0.5s ease;
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            padding-right: 15px;
-            font-size: 20px;
-            position: relative;
-            overflow: hidden;
+            padding-right: 12px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
         }
         
         .progress-emoji {
-            font-size: 20px;
+            font-size: 14px;
             margin-top: 10px;
+            color: #666;
         }
         
         .sales-number {
@@ -246,7 +240,6 @@
             transition: all 0.3s ease;
         }
         
-        /* +1 BUTTON with pizza hover */
         .btn-add {
             padding: 12px 30px;
             font-size: 24px;
@@ -319,17 +312,30 @@
             margin-top: 15px;
             padding: 10px;
             border-radius: 8px;
+            font-size: 14px;
         }
         
         .last-seller {
-            padding: 10px;
+            padding: 12px;
             border-radius: 10px;
             margin-top: 15px;
-            font-size: 14px;
+            font-size: 15px;
             transition: all 0.3s ease;
+            font-weight: 500;
+            text-align: center;
         }
         
-        /* Pizza Party Modal */
+        .last-seller strong {
+            font-weight: bold;
+        }
+        
+        .reward-hint {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
         .pizza-party {
             position: fixed;
             top: 0;
@@ -398,8 +404,8 @@
 
 <div id="welcomeScreen" class="welcome-screen">
     <div class="welcome-box">
-        <h1>🍕 Insurance Sales Tracker</h1>
-        <p>Who's getting us Pizza?</p>
+        <h1>Kassa/service maanddoelen</h1>
+        <p>Log alsjeblieft in</p>
         <div class="name-grid" id="nameButtons"></div>
     </div>
 </div>
@@ -409,28 +415,26 @@
         <h1 id="appTitle">Verzekerings Goal Tracker</h1>
         <div class="user-badge" id="userBadge">
             <strong id="currentUserName"></strong> is ingelogd.
-            <button class="btn-logout" onclick="logout()">Change Person</button>
+            <button class="btn-logout" onclick="logout()">Uitloggen</button>
         </div>
     </div>
     
     <div class="sales-card" id="salesCard">
-        <!-- Loading Spinner -->
         <div id="loadingContainer" class="loading-container">
             <div class="loading-spinner"></div>
-            <div class="loading-text">Loading your tracker... 🍕</div>
+            <div class="loading-text">Loading...</div>
         </div>
         
-        <!-- Actual Content (hidden until loaded) -->
         <div id="mainContent" class="content-hidden">
             <div class="pizza-goal">
                 <div class="pizza-title">
-                    Beloning: pizza つ ◕_◕ ༽つ 🍅🧀🍕
+                    🎯 Maanddoel: <span id="targetDisplay">100</span> verzekeringen
                 </div>
                 <div class="pizza-progress-container">
                     <div class="pizza-progress-bar" id="progressBar"></div>
                 </div>
                 <div class="progress-emoji" id="pizzaStatus">
-                    Toevoegen aan doel
+                    📊 Nog <span id="remainingCount">0</span> te gaan
                 </div>
             </div>
             
@@ -438,10 +442,14 @@
                 <span id="totalSales">0</span> / <span id="targetNumber">100</span>
             </div>
             
-            <button class="btn-add" id="addButton" onclick="addSale()"><span>+1</span></button>
+            <button class="btn-add" id="addButton"><span>+1</span></button>
             
             <div id="status" class="status"></div>
             <div id="lastSeller" class="last-seller"></div>
+            
+            <div class="reward-hint">
+                🍕 Bij behalen doel: pizza voor het team! 🍕
+            </div>
         </div>
     </div>
 </div>
@@ -449,91 +457,22 @@
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3HayGpQQmkkuBUnTc8eUJyTCC0E5cO1BxkpESAGrsPOdmlSw3LbkcPy-p1E_tUV2y/exec';
     
-    // Person Color Themes
     const PERSON_THEMES = {
-        // J = Purple
-        "J": {
-            primary: "#9b59b6",
-            secondary: "#8e44ad",
-            light: "#f3e5f5",
-            text: "#6c3483",
-            background: "linear-gradient(135deg, #e8daef 0%, #d2b4de 100%)"
-        },
-        // C = Light Green + Sunflower
-        "C": {
-            primary: "#7dcea0",
-            secondary: "#52be80",
-            light: "#eafaf1",
-            text: "#1e8449",
-            background: "linear-gradient(135deg, #d5f5e3 0%, #abebc6 100%)"
-        },
-        // L = Barbie pink princess vibe
-        "L": {
-            primary: "#ff69b4",
-            secondary: "#ff1493",
-            light: "#ffe4f0",
-            text: "#c71585",
-            background: "linear-gradient(135deg, #ffe0f0 0%, #ffb6d9 100%)"
-        },
-        // Ma = Baby pink
-        "Ma": {
-            primary: "#ffb7c5",
-            secondary: "#ff9eb0",
-            light: "#fff0f2",
-            text: "#e85d75",
-            background: "linear-gradient(135deg, #fff0f3 0%, #ffe0e6 100%)"
-        },
-        // Z = Baby blue
-        "Z": {
-            primary: "#89cff0",
-            secondary: "#5dade2",
-            light: "#e8f4fd",
-            text: "#2e86c1",
-            background: "linear-gradient(135deg, #eaf7ff 0%, #d4eef7 100%)"
-        },
-        // F = Pink
-        "F": {
-            primary: "#ff6b9d",
-            secondary: "#ff4081",
-            light: "#ffe4ec",
-            text: "#e91e63",
-            background: "linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)"
-        },
-        // Lav = Darker Lavender (more visible)
-        "Lav": {
-            primary: "#8a6dbb",
-            secondary: "#7554a3",
-            light: "#f0ebf7",
-            text: "#5a3d8c",
-            background: "linear-gradient(135deg, #e8dfef 0%, #d6c7e3 100%)"
-        },
-        // Me = Pink (same as F)
-        "Me": {
-            primary: "#ff6b9d",
-            secondary: "#ff4081",
-            light: "#ffe4ec",
-            text: "#e91e63",
-            background: "linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)"
-        },
-        // H = Barbie pink
-        "H": {
-            primary: "#ff69b4",
-            secondary: "#ff1493",
-            light: "#ffe4f0",
-            text: "#c71585",
-            background: "linear-gradient(135deg, #ffe0f0 0%, #ffb6d9 100%)"
-        },
-        // R = Light green
-        "R": {
-            primary: "#a3e4d7",
-            secondary: "#76d7c4",
-            light: "#e8f8f5",
-            text: "#117a65",
-            background: "linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)"
-        }
+        "J": { primary: "#9b59b6", secondary: "#8e44ad", light: "#f3e5f5", text: "#6c3483", background: "linear-gradient(135deg, #e8daef 0%, #d2b4de 100%)" },
+        "C": { primary: "#7dcea0", secondary: "#52be80", light: "#eafaf1", text: "#1e8449", background: "linear-gradient(135deg, #d5f5e3 0%, #abebc6 100%)" },
+        "L": { primary: "#ff69b4", secondary: "#ff1493", light: "#ffe4f0", text: "#c71585", background: "linear-gradient(135deg, #ffe0f0 0%, #ffb6d9 100%)" },
+        "Ma": { primary: "#ffb7c5", secondary: "#ff9eb0", light: "#fff0f2", text: "#e85d75", background: "linear-gradient(135deg, #fff0f3 0%, #ffe0e6 100%)" },
+        "Z": { primary: "#89cff0", secondary: "#5dade2", light: "#e8f4fd", text: "#2e86c1", background: "linear-gradient(135deg, #eaf7ff 0%, #d4eef7 100%)" },
+        "F": { primary: "#ff6b9d", secondary: "#ff4081", light: "#ffe4ec", text: "#e91e63", background: "linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)" },
+        "Lav": { primary: "#8a6dbb", secondary: "#7554a3", light: "#f0ebf7", text: "#5a3d8c", background: "linear-gradient(135deg, #e8dfef 0%, #d6c7e3 100%)" },
+        "Me": { primary: "#ff6b9d", secondary: "#ff4081", light: "#ffe4ec", text: "#e91e63", background: "linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)" },
+        "H": { primary: "#ff69b4", secondary: "#ff1493", light: "#ffe4f0", text: "#c71585", background: "linear-gradient(135deg, #ffe0f0 0%, #ffb6d9 100%)" },
+        "R": { primary: "#a3e4d7", secondary: "#76d7c4", light: "#e8f8f5", text: "#117a65", background: "linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)" },
+        "A": { primary: "#ff69b4", secondary: "#ff1493", light: "#ffe4f0", text: "#c71585", background: "linear-gradient(135deg, #ffe0f0 0%, #ffb6d9 100%)" },
+        "S": { primary: "#ffb7c5", secondary: "#ff9eb0", light: "#fff0f2", text: "#e85d75", background: "linear-gradient(135deg, #fff0f3 0%, #ffe0e6 100%)" },
+        "T": { primary: "#8a6dbb", secondary: "#7554a3", light: "#f0ebf7", text: "#5a3d8c", background: "linear-gradient(135deg, #e8dfef 0%, #d6c7e3 100%)" }
     };
     
-    // Standard theme (MediaMarkt Red, White, Black)
     const STANDARD_THEME = {
         primary: "#E3000F",
         secondary: "#c4000d",
@@ -542,21 +481,12 @@
         background: "linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)"
     };
     
-    // Team members with their assigned themes
     const TEAM_MEMBERS = [
-        { name: "J", themeKey: "J" },
-        { name: "C", themeKey: "C" },
-        { name: "L", themeKey: "L" },
-        { name: "Ma", themeKey: "Ma" },
-        { name: "Z", themeKey: "Z" },
-        { name: "F", themeKey: "F" },
-        { name: "Lav", themeKey: "Lav" },
-        { name: "Me", themeKey: "Me" },
-        { name: "MX", themeKey: "standard" },
-        { name: "Je", themeKey: "standard" },
-        { name: "R1", themeKey: "standard" },
-        { name: "H", themeKey: "H" },
-        { name: "R2", themeKey: "R" }
+        { name: "Judith", themeKey: "J" }, { name: "Corrie", themeKey: "C" }, { name: "Lambo", themeKey: "L" },
+        { name: "Maria", themeKey: "Ma" }, { name: "Zehra", themeKey: "Z" }, { name: "Fatima", themeKey: "F" },
+        { name: "Louiza", themeKey: "Lav" }, { name: "Meera", themeKey: "Me" }, { name: "Max", themeKey: "standard" },
+        { name: "Jerry", themeKey: "standard" }, { name: "Rakibe", themeKey: "standard" }, { name: "Hidde", themeKey: "H" },
+        { name: "Ruben", themeKey: "R" },{ name: "Anouk", themeKey: "A" }, { name: "Shafia", themeKey: "S" }, { name: "Tessa", themeKey: "T" }
     ];
     
     let currentUser = null;
@@ -565,19 +495,16 @@
     let pizzaPartyActive = false;
     let currentTheme = STANDARD_THEME;
     
-    // Show loading, hide content
     function showLoading() {
         document.getElementById('loadingContainer').style.display = 'block';
         document.getElementById('mainContent').className = 'content-hidden';
     }
     
-    // Hide loading, show content
     function hideLoading() {
         document.getElementById('loadingContainer').style.display = 'none';
         document.getElementById('mainContent').className = 'content-visible';
     }
     
-    // Apply theme colors to the page (ONLY for the main app area)
     function applyTheme(theme) {
         const body = document.getElementById('mainBody');
         const appHeader = document.getElementById('appHeader');
@@ -601,92 +528,57 @@
         addButton.style.borderColor = theme.primary;
         addButton.style.color = theme.primary;
         
-        // Update spinner color to match theme
         const spinner = document.querySelector('.loading-spinner');
-        if (spinner) {
-            spinner.style.borderTopColor = theme.primary;
-        }
+        if (spinner) spinner.style.borderTopColor = theme.primary;
         
-        // Remove existing listeners to avoid duplicates
         const newAddButton = addButton.cloneNode(true);
         addButton.parentNode.replaceChild(newAddButton, addButton);
         newAddButton.id = 'addButton';
         newAddButton.style.borderColor = theme.primary;
         newAddButton.style.color = theme.primary;
         newAddButton.onclick = addSale;
-        
-        newAddButton.onmouseenter = () => {
-            newAddButton.style.background = theme.primary;
-            newAddButton.style.color = "white";
-        };
-        newAddButton.onmouseleave = () => {
-            newAddButton.style.background = "white";
-            newAddButton.style.color = theme.primary;
-        };
+        newAddButton.onmouseenter = () => { newAddButton.style.background = theme.primary; newAddButton.style.color = "white"; };
+        newAddButton.onmouseleave = () => { newAddButton.style.background = "white"; newAddButton.style.color = theme.primary; };
         
         lastSeller.style.background = theme.light;
         lastSeller.style.border = `1px solid ${theme.primary}`;
         lastSeller.style.color = theme.text;
         
-        // Update the global addButton reference
         window.addButton = newAddButton;
     }
     
-    // Get theme for a person
     function getThemeForPerson(name) {
         const member = TEAM_MEMBERS.find(m => m.name === name);
-        if (member && member.themeKey !== "standard") {
-            return PERSON_THEMES[member.themeKey];
-        }
+        if (member && member.themeKey !== "standard") return PERSON_THEMES[member.themeKey];
         return STANDARD_THEME;
     }
     
-    // Create name buttons - ALL with standard red color
     function createNameButtons() {
         const container = document.getElementById('nameButtons');
         container.innerHTML = '';
-        
         TEAM_MEMBERS.forEach(member => {
             const btn = document.createElement('button');
             btn.className = 'name-btn';
             btn.innerHTML = member.name;
-            // All buttons use standard red on welcome screen
             btn.style.borderColor = "#E3000F";
             btn.style.color = "#E3000F";
-            btn.onmouseenter = () => {
-                btn.style.background = "#E3000F";
-                btn.style.color = "white";
-            };
-            btn.onmouseleave = () => {
-                btn.style.background = "white";
-                btn.style.color = "#E3000F";
-            };
+            btn.onmouseenter = () => { btn.style.background = "#E3000F"; btn.style.color = "white"; };
+            btn.onmouseleave = () => { btn.style.background = "white"; btn.style.color = "#E3000F"; };
             btn.onclick = () => selectUser(member.name);
             container.appendChild(btn);
         });
     }
     
-    // When user selects their name
     async function selectUser(name) {
         currentUser = name;
         currentTheme = getThemeForPerson(name);
         document.getElementById('currentUserName').innerText = currentUser;
-        
-        // Hide welcome screen, show main app
         document.getElementById('welcomeScreen').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
-        
-        // Show loading
         showLoading();
-        
-        // Apply the person's theme (will affect the main app area)
         applyTheme(currentTheme);
-        
-        // Load data
         await loadTarget();
         await loadSales();
-        
-        // Hide loading after data is loaded
         hideLoading();
     }
     
@@ -707,10 +599,7 @@
             currentSales = parseInt(await response.text());
             document.getElementById('totalSales').innerText = currentSales;
             updateProgress();
-            
-            if (currentSales >= currentTarget && !pizzaPartyActive) {
-                showPizzaParty();
-            }
+            if (currentSales >= currentTarget && !pizzaPartyActive) showPizzaParty();
         } catch(error) {
             document.getElementById('status').innerHTML = 'Error loading: ' + error.message;
             document.getElementById('totalSales').innerText = '?';
@@ -721,18 +610,26 @@
         const percent = (currentSales / currentTarget) * 100;
         const percentDisplay = Math.min(percent, 100);
         document.getElementById('progressBar').style.width = percentDisplay + '%';
+        document.getElementById('progressBar').innerHTML = Math.floor(percentDisplay) + '%';
+        
+        const remaining = currentTarget - currentSales;
+        const remainingElement = document.getElementById('remainingCount');
+        if (remainingElement) remainingElement.innerText = Math.max(0, remaining);
+        
+        const targetDisplay = document.getElementById('targetDisplay');
+        if (targetDisplay) targetDisplay.innerText = currentTarget;
         
         const pizzaStatus = document.getElementById('pizzaStatus');
         if (percentDisplay >= 100) {
-            pizzaStatus.innerHTML = '🎉🍕 PIZZA TIME! GOAL REACHED! 🍕🎉';
+            pizzaStatus.innerHTML = '🎉 DOEL BEHAALD! 🎉 🍕 PIZZA TIJD! 🍕';
         } else if (percentDisplay >= 75) {
-            pizzaStatus.innerHTML = '🍕🍕 SO CLOSE! Almost pizza time! 🍕🍕';
+            pizzaStatus.innerHTML = '🍕 Nog ' + remaining + ' te gaan! Jullie zijn er bijna! 🍕';
         } else if (percentDisplay >= 50) {
-            pizzaStatus.innerHTML = '🍕 Halfway there! Keep selling for pizza! 🍕';
+            pizzaStatus.innerHTML = '📈 Halverwege! Nog ' + remaining + ' verzekeringen te gaan';
         } else if (percentDisplay >= 25) {
-            pizzaStatus.innerHTML = '🧀 Good start! More sales = more pizza! 🧀';
+            pizzaStatus.innerHTML = '💪 Goede start! Nog ' + remaining + ' te gaan';
         } else {
-            pizzaStatus.innerHTML = 'Toevoegen aan doel (づ•ᴗ•)づᯓ🍕';
+            pizzaStatus.innerHTML = '📊 Nog ' + remaining + ' verzekeringen te gaan voor het doel';
         }
         
         const progressBar = document.getElementById('progressBar');
@@ -743,13 +640,12 @@
         } else if (percentDisplay >= 50) {
             progressBar.style.background = 'linear-gradient(90deg, #ff8c42, #ffaa00)';
         } else {
-            progressBar.style.background = 'linear-gradient(90deg, #d4a373, #ff8c42)';
+            progressBar.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)';
         }
     }
     
     function showPizzaParty() {
         pizzaPartyActive = true;
-        
         for (let i = 0; i < 30; i++) {
             setTimeout(() => {
                 const pizza = document.createElement('div');
@@ -768,9 +664,9 @@
             <div class="pizza-modal">
                 <h2>🎉🍕 PIZZA PARTY! 🍕🎉</h2>
                 <div class="big-pizza celebration-pizza">🍕</div>
-                <p style="font-size: 24px; margin: 20px;">GOAL REACHED!</p>
-                <p style="font-size: 18px; margin: 10px;">Time to order pizza for the team! 🎊</p>
-                <button class="close-party" onclick="this.closest('.pizza-party').remove(); pizzaPartyActive = false;">🍕 LET'S EAT! 🍕</button>
+                <p style="font-size: 24px; margin: 20px;">DOEL BEHAALD!</p>
+                <p style="font-size: 18px; margin: 10px;">Tijd om pizza te bestellen voor het team! 🎊</p>
+                <button class="close-party" onclick="this.closest('.pizza-party').remove(); pizzaPartyActive = false;">🍕 Laten we eten! 🍕</button>
             </div>
         `;
         document.body.appendChild(modal);
@@ -778,7 +674,7 @@
     
     async function addSale() {
         if (!currentUser) {
-            alert('Please select your name first');
+            alert('Selecteer eerst je naam');
             return;
         }
         
@@ -787,12 +683,12 @@
             const result = await response.text();
             
             if (result === 'TARGET_REACHED') {
-                document.getElementById('status').innerHTML = '🎉🍕 TARGET REACHED! PIZZA TIME! 🍕🎉';
+                document.getElementById('status').innerHTML = '🎉🍕 DOEL BEHAALD! PIZZA-TIJD! 🍕🎉';
                 document.getElementById('status').style.background = '#d4edda';
             } else {
-                document.getElementById('status').innerHTML = '✅ Sale recorded for ' + currentUser + '! +1 closer to pizza! 🍕';
+                document.getElementById('status').innerHTML = '✅ Punt toegevoegd door ' + currentUser + '! Goed bezig';
                 document.getElementById('status').style.background = '#d4edda';
-                document.getElementById('lastSeller').innerHTML = '🏆 Last sale added by: <strong>' + currentUser + '</strong> 🍕';
+                document.getElementById('lastSeller').innerHTML = '🏆 Laatste punt toegevoegd door: <strong>' + currentUser + '</strong> (˶ᵔ ᵕ ᵔ˶)';
                 await loadSales();
             }
             
@@ -813,12 +709,9 @@
         document.getElementById('mainApp').style.display = 'none';
         document.getElementById('status').innerHTML = '';
         document.getElementById('lastSeller').innerHTML = '';
-        
-        // Reset to standard theme for welcome screen
         applyTheme(STANDARD_THEME);
     }
     
-    // Initialize the page with standard theme
     applyTheme(STANDARD_THEME);
     createNameButtons();
 </script>
