@@ -241,61 +241,110 @@
         }
         
         .btn-add {
-            padding: 12px 30px;
-            font-size: 24px;
-            font-weight: bold;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            margin: 10px;
-            transition: all 0.2s ease;
-            background: white;
-            border: 2px solid;
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 160px;
-            height: 60px;
-            overflow: hidden;
-        }
-        
-        .btn-add span {
-            display: inline-block;
-            transition: opacity 0.2s ease;
-            z-index: 1;
-            position: relative;
-        }
-        
-        .btn-add:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-        }
-        
-        .btn-add:hover span {
-            opacity: 0;
-        }
-        
-        .btn-add::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('pizza.png');
-            background-size: 150%;
-            background-repeat: no-repeat;
-            background-position: center;
-            transition: all 0.3s ease;
-            opacity: 0;
-            pointer-events: none;
-            border-radius: 8px;
-        }
-        
-        .btn-add:hover::after {
-            opacity: 1;
-        }
+    padding: 12px 30px;
+    font-size: 24px;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.2s ease;
+    background: white;
+    border: 2px solid;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+    height: 60px;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-add span {
+    display: inline-block;
+    transition: opacity 0.15s ease;
+    z-index: 1;
+    position: relative;
+}
+
+.btn-add::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('pizza.png');
+    background-size: 150%;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: opacity 0.15s ease;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 8px;
+}
+
+/* Desktop hover effect */
+@media (hover: hover) {
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+    
+    .btn-add:hover span {
+        opacity: 0;
+    }
+    
+    .btn-add:hover::after {
+        opacity: 1;
+    }
+}
+
+/* Mobile tap effect */
+.btn-add:active {
+    transform: scale(0.97);
+}
+
+.btn-add:active span {
+    opacity: 0;
+}
+
+.btn-add:active::after {
+    opacity: 1;
+}
+
+.name-btn {
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    border: 2px solid #E3000F;
+    color: #E3000F;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    height: 48px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+    .name-btn:hover {
+        background: #E3000F;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(227,0,15,0.3);
+    }
+}
+
+.name-btn:active {
+    transform: scale(0.97);
+}
         
         .btn-logout {
             background: white;
@@ -398,6 +447,52 @@
                 font-size: 48px;
             }
         }
+        /* Only apply hover effects on devices that support hover (desktop) */
+@media (hover: hover) {
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+    
+    .btn-add:hover span {
+        opacity: 0;
+    }
+    
+    .btn-add:hover::after {
+        opacity: 1;
+    }
+}
+
+/* Mobile touch feedback - pizza appears briefly on tap */
+.btn-add:active {
+    transform: scale(0.97);
+}
+
+.btn-add:active span {
+    opacity: 0;
+}
+
+.btn-add:active::after {
+    opacity: 1;
+}
+
+/* Ensure the pizza disappears after tap */
+.btn-add::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('pizza.png');
+    background-size: 150%;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: opacity 0.15s ease;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 8px;
+}
     </style>
 </head>
 <body id="mainBody">
@@ -673,34 +768,45 @@
     }
     
     async function addSale() {
-        if (!currentUser) {
-            alert('Selecteer eerst je naam');
-            return;
+    if (!currentUser) {
+        alert('Selecteer eerst je naam');
+        return;
+    }
+    
+    const btn = document.getElementById('addButton');
+    
+    try {
+        const response = await fetch(SCRIPT_URL + '?action=add&name=' + encodeURIComponent(currentUser));
+        const result = await response.text();
+        
+        if (result === 'TARGET_REACHED') {
+            document.getElementById('status').innerHTML = '🎉🍕 DOEL BEHAALD! PIZZA-TIJD! 🍕🎉';
+            document.getElementById('status').style.background = '#d4edda';
+        } else {
+            document.getElementById('status').innerHTML = '✅ Punt toegevoegd door ' + currentUser + '! Goed bezig';
+            document.getElementById('status').style.background = '#d4edda';
+            document.getElementById('lastSeller').innerHTML = '🏆 Laatste punt toegevoegd door: <strong>' + currentUser + '</strong> (˶ᵔ ᵕ ᵔ˶)';
+            await loadSales();
         }
         
-        try {
-            const response = await fetch(SCRIPT_URL + '?action=add&name=' + encodeURIComponent(currentUser));
-            const result = await response.text();
-            
-            if (result === 'TARGET_REACHED') {
-                document.getElementById('status').innerHTML = '🎉🍕 DOEL BEHAALD! PIZZA-TIJD! 🍕🎉';
-                document.getElementById('status').style.background = '#d4edda';
-            } else {
-                document.getElementById('status').innerHTML = '✅ Punt toegevoegd door ' + currentUser + '! Goed bezig';
-                document.getElementById('status').style.background = '#d4edda';
-                document.getElementById('lastSeller').innerHTML = '🏆 Laatste punt toegevoegd door: <strong>' + currentUser + '</strong> (˶ᵔ ᵕ ᵔ˶)';
-                await loadSales();
-            }
-            
-            setTimeout(() => {
-                document.getElementById('status').innerHTML = '';
-                document.getElementById('status').style.background = '';
-            }, 3000);
-        } catch(error) {
-            document.getElementById('status').innerHTML = 'Error: ' + error.message;
-            document.getElementById('status').style.background = '#f8d7da';
-        }
+        setTimeout(() => {
+            document.getElementById('status').innerHTML = '';
+            document.getElementById('status').style.background = '';
+        }, 3000);
+    } catch(error) {
+        document.getElementById('status').innerHTML = 'Error: ' + error.message;
+        document.getElementById('status').style.background = '#f8d7da';
     }
+    
+    // Reset button visual after tap (for mobile)
+    setTimeout(() => {
+        if (btn) {
+            btn.style.transform = '';
+            const span = btn.querySelector('span');
+            if (span) span.style.opacity = '';
+        }
+    }, 200);
+}
     
     function logout() {
         currentUser = null;
