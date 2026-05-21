@@ -1,3 +1,846 @@
+                <!DOCTYPE html>
+<html>
+<head>
+    <title>Verzekerings Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background: white;
+            position: relative;
+        }
+        
+        /* Thick Top Red Bar */
+        .top-red-bar {
+            background: #b8000f;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+        }
+        
+        .logo-container {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .logo-container img {
+            height: 50px;
+            width: auto;
+            display: block;
+        }
+        
+        /* Fake search bar in the middle */
+        .fake-search {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40%;
+            max-width: 500px;
+            min-width: 200px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 25px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: #333;
+            cursor: default;
+        }
+        
+        .search-input::placeholder {
+            color: #999;
+        }
+        
+        /* Thin Black Bar (1/3 height of red bar) */
+        .black-bar {
+            background: #1a1a1a;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            width: 100%;
+            height: 27px;
+            z-index: 99;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pizzaRain {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #b8000f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        .loading-container {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .loading-text {
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .content-hidden {
+            display: none;
+        }
+        
+        .content-visible {
+            display: block;
+        }
+        
+        .pizza-emoji {
+            position: fixed;
+            font-size: 40px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: pizzaRain 3s linear forwards;
+        }
+        
+        .celebration-pizza {
+            animation: bounce 0.5s ease infinite;
+            display: inline-block;
+        }
+        
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            padding-top: 130px;
+            background: white;
+        }
+        
+        .welcome-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            margin: 20px;
+            border: 1px solid #eee;
+        }
+        
+        .welcome-box h1 {
+            margin-bottom: 10px;
+            color: #b8000f;
+            font-size: 28px;
+        }
+        
+        .name-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .name-btn {
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            border: 2px solid #b8000f;
+            color: #b8000f;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+            height: 48px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (hover: hover) {
+            .name-btn:hover {
+                background: #b8000f;
+                color: white;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(184,0,15,0.3);
+            }
+        }
+        
+        .name-btn:active {
+            transform: scale(0.97);
+        }
+        
+        /* Main App */
+        .main-app {
+            display: none;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            padding-top: 130px;
+            background: white;
+            min-height: 100vh;
+        }
+        
+        .app-header {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 1px solid #eee;
+        }
+        
+        .app-header h1 {
+            transition: color 0.3s ease;
+        }
+        
+        .user-badge {
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .sales-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 400px;
+            border: 1px solid #eee;
+        }
+        
+        .pizza-goal {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .pizza-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: normal;
+        }
+        
+        .pizza-progress-container {
+            background: #f0f0f0;
+            border-radius: 25px;
+            padding: 3px;
+            margin: 20px 0;
+        }
+        
+        .pizza-progress-bar {
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            height: 35px;
+            border-radius: 22px;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .progress-emoji {
+            font-size: 14px;
+            margin-top: 10px;
+            color: #666;
+        }
+        
+        .sales-number {
+            font-size: 72px;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-add {
+            padding: 12px 30px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.1s ease;
+            background: white;
+            border: 2px solid;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 160px;
+            height: 60px;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            transform: translateZ(0);
+        }
+        
+        .btn-add span {
+            display: inline-block;
+            transition: opacity 0.1s ease;
+            z-index: 1;
+            position: relative;
+        }
+        
+        .btn-add::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('pizza.png');
+            background-size: 150%;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: opacity 0.1s ease;
+            opacity: 0;
+            pointer-events: none;
+            border-radius: 8px;
+        }
+        
+        @media (hover: hover) {
+            .btn-add:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            }
+            
+            .btn-add:hover span {
+                opacity: 0;
+            }
+            
+            .btn-add:hover::after {
+                opacity: 1;
+            }
+        }
+        
+        .btn-add:active {
+            transform: scale(0.97);
+        }
+        
+        .btn-add:active span {
+            opacity: 0;
+        }
+        
+        .btn-add:active::after {
+            opacity: 1;
+        }
+        
+        .btn-add:focus, .btn-add:focus-visible {
+            outline: none;
+            background: white !important;
+        }
+        
+        .btn-add:focus span, .btn-add:focus-visible span {
+            opacity: 1;
+        }
+        
+        .btn-add:focus::after, .btn-add:focus-visible::after {
+            opacity: 0;
+        }
+        
+        .btn-logout {
+            background: white;
+            color: #666;
+            font-size: 14px;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .last-seller {
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .last-seller strong {
+            font-weight: bold;
+        }
+        
+        .reward-hint {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .pizza-party {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .pizza-modal {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 400px;
+            animation: bounce 0.5s ease;
+        }
+        
+        .pizza-modal h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .pizza-modal .big-pizza {
+            font-size: 80px;
+            margin: 20px;
+        }
+        
+        .close-party {
+            background: #b8000f;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .name-btn {
+                height: 44px;
+                min-width: 80px;
+            }
+            .btn-add {
+                height: 55px;
+                min-width: 140px;
+            }
+            .sales-number {
+                font-size: 48px;
+            }
+            .top-red-bar {
+                height: 60px;
+                padding: 0 15px;
+            }
+            .logo-container img {
+                height: 35px;
+            }
+            .black-bar {
+                top: 60px;
+                height: 20px;
+            }
+            .welcome-screen, .main-app {
+                padding-top: 100px;
+            }
+            .fake-search {
+                width: 50%;
+            }
+            .search-input {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            .top-red-bar {
+            background: #b8000f;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-container {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .logo-container img {
+            height: 50px;
+            width: auto;
+            display: block;
+            filter: brightness(0) invert(1);  /* Forces white color */
+        }
+
+        /* Fallback text if image doesn't load */
+        .logo-fallback {
+            display: none;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+    }
+    </style>
+</head>
+<body id="mainBody">
+
+<!-- Thick Top Red Bar -->
+<div class="top-red-bar">
+    <div class="logo-container">
+        <img src="mmlogo.png" alt="MediaMarkt" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div style="display: none; color: white; font-weight: bold; font-size: 20px;">📺 MEDIAMARKT</div>
+    </div>
+    
+    <!-- Fake search bar in the middle -->
+    <div class="fake-search">
+        <input type="text" class="search-input" placeholder="Zoek producten, merken of categorieën" readonly>
+    </div>
+</div>
+
+<!-- Thin Black Bar (1/3 height of red bar: 80px/3 ≈ 27px) -->
+<div class="black-bar"></div>
+
+<!-- Welcome Screen -->
+<div id="welcomeScreen" class="welcome-screen">
+    <div class="welcome-box">
+        <h1>Kassa/service maanddoelen</h1>
+        <p>Log alsjeblieft in</p>
+        <div class="name-grid" id="nameButtons"></div>
+    </div>
+</div>
+
+<div id="mainApp" class="main-app">
+    <div class="app-header" id="appHeader">
+        <h1 id="appTitle">Verzekerings Goal Tracker</h1>
+        <div class="user-badge" id="userBadge">
+            <strong id="currentUserName"></strong> is ingelogd.
+            <button class="btn-logout" onclick="logout()">Uitloggen</button>
+        </div>
+    </div>
+    
+    <div class="sales-card" id="salesCard">
+        <div id="loadingContainer" class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading...</div>
+        </div>
+        
+        <div id="mainContent" class="content-hidden">
+            <div class="pizza-goal">
+                <div class="pizza-title">
+                    🎯 Maanddoel: <span id="targetDisplay">100</span> verzekeringen
+                </div>
+                <div class="pizza-progress-container">
+                    <div class="pizza-progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-emoji" id="pizzaStatus">
+                    📊 Nog <span id="remainingCount">0</span> te gaan
+                </div>
+            </div>
+            
+            <div class="sales-number" id="salesNumber">
+                <span id="totalSales">0</span> / <span id="targetNumber">100</span>
+            </div>
+            
+            <button class="btn-add" id="addButton"><span>+1</span></button>
+            
+            <div id="status" class="status"></div>
+            <div id="lastSeller" class="last-seller"></div>
+            
+            <div class="reward-hint">
+                🍕 Bij behalen doel: pizza voor het team! 🍕
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3HayGpQQmkkuBUnTc8eUJyTCC0E5cO1BxkpESAGrsPOdmlSw3LbkcPy-p1E_tUV2y/exec';
+    
+    const PERSON_THEMES = {
+        "J": { primary: "#9b59b6", secondary: "#8e44ad", light: "#f3e5f5", text: "#6c3483", background: "#ffffff" },
+        "C": { primary: "#7dcea0", secondary: "#52be80", light: "#eafaf1", text: "#1e8449", background: "#ffffff" },
+        "L": { primary: "#ff69b4", secondary: "#ff1493", light: "#ffe4f0", text: "#c71585", background: "#ffffff" },
+        "Ma": { primary: "#ffb7c5", secondary: "#ff9eb0", light: "#fff0f2", text: "#e85d75", background: "#ffffff" },
+        "Z": { primary: "#89cff0", secondary: "#5dade2", light: "#e8f4fd", text: "#2e86c1", background: "#ffffff" },
+        "F": { primary: "#ff6b9d", secondary: "#ff4081", light: "#ffe4ec", text: "#e91e63", background: "#ffffff" },
+        "Lav": { primary: "#8a6dbb", secondary: "#7554a3", light: "#f0ebf7", text: "#5a3d8c", background: "#ffffff" },
+        "Me": { primary: "#ff6b9d", secondary: "#ff4081", light: "#ffe4ec", text: "#e91e63", background: "#ffffff" },
+        "H": { primary: "#ff69b4", secondary: "#ff1493", light: "#ffe4f0", text: "#c71585", background: "#ffffff" },
+        "R": { primary: "#a3e4d7", secondary: "#76d7c4", light: "#e8f8f5", text: "#117a65", background: "#ffffff" },
+        "A": { primary: "#ff69b4", secondary: "#ff1493", light: "#ffe4f0", text: "#c71585", background: "#ffffff" },
+        "S": { primary: "#ffb7c5", secondary: "#ff9eb0", light: "#fff0f2", text: "#e85d75", background: "#ffffff" },
+        "T": { primary: "#8a6dbb", secondary: "#7554a3", light: "#f0ebf7", text: "#5a3d8c", background: "#ffffff" }
+    };
+    
+    const STANDARD_THEME = {
+        primary: "#b8000f",
+        secondary: "#9a000d",
+        light: "#FFF5F5",
+        text: "#b8000f",
+        background: "#ffffff"
+    };
+    
+    const TEAM_MEMBERS = [
+        { name: "Judith", themeKey: "J" }, { name: "Corrie", themeKey: "C" }, { name: "Lambo", themeKey: "L" },
+        { name: "Maria", themeKey: "Ma" }, { name: "Zehra", themeKey: "Z" }, { name: "Fatima", themeKey: "F" },
+        { name: "Louiza", themeKey: "Lav" }, { name: "Meera", themeKey: "Me" }, { name: "Max", themeKey: "standard" },
+        { name: "Jerry", themeKey: "standard" }, { name: "Rakibe", themeKey: "standard" }, { name: "Hidde", themeKey: "H" },
+        { name: "Ruben", themeKey: "R" }, { name: "Anouk", themeKey: "A" }, { name: "Shafia", themeKey: "S" }, { name: "Tessa", themeKey: "T" }
+    ];
+    
+    let currentUser = null;
+    let currentTarget = 100;
+    let currentSales = 0;
+    let pizzaPartyActive = false;
+    let currentTheme = STANDARD_THEME;
+    
+    function showLoading() {
+        document.getElementById('loadingContainer').style.display = 'block';
+        document.getElementById('mainContent').className = 'content-hidden';
+    }
+    
+    function hideLoading() {
+        document.getElementById('loadingContainer').style.display = 'none';
+        document.getElementById('mainContent').className = 'content-visible';
+    }
+    
+    function applyTheme(theme) {
+        const body = document.getElementById('mainBody');
+        const appHeader = document.getElementById('appHeader');
+        const appTitle = document.getElementById('appTitle');
+        const userBadge = document.getElementById('userBadge');
+        const salesCard = document.getElementById('salesCard');
+        const salesNumber = document.getElementById('salesNumber');
+        const addButton = document.getElementById('addButton');
+        const lastSeller = document.getElementById('lastSeller');
+        
+        // Keep body white for MediaMarkt style
+        body.style.background = '#ffffff';
+        appHeader.style.border = `2px solid ${theme.primary}`;
+        appTitle.style.color = theme.primary;
+        userBadge.style.background = theme.light;
+        userBadge.style.border = `1px solid ${theme.primary}`;
+        salesCard.style.border = `2px solid ${theme.primary}`;
+        salesNumber.style.background = `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`;
+        salesNumber.style.webkitBackgroundClip = "text";
+        salesNumber.style.backgroundClip = "text";
+        salesNumber.style.color = "transparent";
+        
+        if (addButton) {
+            addButton.style.borderColor = theme.primary;
+            addButton.style.color = theme.primary;
+            addButton.style.background = 'white';
+        }
+        
+        const spinner = document.querySelector('.loading-spinner');
+        if (spinner) spinner.style.borderTopColor = theme.primary;
+        
+        if (addButton) {
+            const newAddButton = addButton.cloneNode(true);
+            addButton.parentNode.replaceChild(newAddButton, addButton);
+            newAddButton.id = 'addButton';
+            newAddButton.style.borderColor = theme.primary;
+            newAddButton.style.color = theme.primary;
+            newAddButton.style.background = 'white';
+            newAddButton.onclick = addSale;
+            newAddButton.onmouseenter = () => { newAddButton.style.background = theme.primary; newAddButton.style.color = "white"; };
+            newAddButton.onmouseleave = () => { newAddButton.style.background = "white"; newAddButton.style.color = theme.primary; };
+            window.addButton = newAddButton;
+        }
+        
+        lastSeller.style.background = theme.light;
+        lastSeller.style.border = `1px solid ${theme.primary}`;
+        lastSeller.style.color = theme.text;
+    }
+    
+    function getThemeForPerson(name) {
+        const member = TEAM_MEMBERS.find(m => m.name === name);
+        if (member && member.themeKey !== "standard") return PERSON_THEMES[member.themeKey];
+        return STANDARD_THEME;
+    }
+    
+    function createNameButtons() {
+        const container = document.getElementById('nameButtons');
+        container.innerHTML = '';
+        TEAM_MEMBERS.forEach(member => {
+            const btn = document.createElement('button');
+            btn.className = 'name-btn';
+            btn.innerHTML = member.name;
+            btn.style.borderColor = "#b8000f";
+            btn.style.color = "#b8000f";
+            btn.onmouseenter = () => { btn.style.background = "#b8000f"; btn.style.color = "white"; };
+            btn.onmouseleave = () => { btn.style.background = "white"; btn.style.color = "#b8000f"; };
+            btn.onclick = () => selectUser(member.name);
+            container.appendChild(btn);
+        });
+    }
+    
+    async function selectUser(name) {
+        currentUser = name;
+        currentTheme = getThemeForPerson(name);
+        document.getElementById('currentUserName').innerText = currentUser;
+        document.getElementById('welcomeScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        showLoading();
+        applyTheme(currentTheme);
+        await loadTarget();
+        await loadSales();
+        hideLoading();
+    }
+    
+    async function loadTarget() {
+        try {
+            const response = await fetch(SCRIPT_URL + '?action=target');
+            currentTarget = parseInt(await response.text());
+            document.getElementById('targetNumber').innerText = currentTarget;
+        } catch(error) {
+            console.error('Error loading target:', error);
+            document.getElementById('targetNumber').innerText = '?';
+        }
+    }
+    
+    async function loadSales() {
+        try {
+            const response = await fetch(SCRIPT_URL + '?action=get');
+            currentSales = parseInt(await response.text());
+            document.getElementById('totalSales').innerText = currentSales;
+            updateProgress();
+            if (currentSales >= currentTarget && !pizzaPartyActive) showPizzaParty();
+        } catch(error) {
+            document.getElementById('status').innerHTML = 'Error loading: ' + error.message;
+            document.getElementById('totalSales').innerText = '?';
+        }
+    }
+    
+    function updateProgress() {
+        const percent = (currentSales / currentTarget) * 100;
+        const percentDisplay = Math.min(percent, 100);
+        document.getElementById('progressBar').style.width = percentDisplay + '%';
+        document.getElementById('progressBar').innerHTML = Math.floor(percentDisplay) + '%';
+        
+        const remaining = currentTarget - currentSales;
+        const remainingElement = document.getElementById('remainingCount');
+        if (remainingElement) remainingElement.innerText = Math.max(0, remaining);
+        
+        const targetDisplay = document.getElementById('targetDisplay');
+        if (targetDisplay) targetDisplay.innerText = currentTarget;
+        
+        const pizzaStatus = document.getElementById('pizzaStatus');
+        if (percentDisplay >= 100) {
+            pizzaStatus.innerHTML = '🎉 DOEL BEHAALD! 🎉 🍕 PIZZA TIJD! 🍕';
+        } else if (percentDisplay >= 75) {
+            pizzaStatus.innerHTML = '🍕 Nog ' + remaining + ' te gaan! Jullie zijn er bijna! 🍕';
+        } else if (percentDisplay >= 50) {
+            pizzaStatus.innerHTML = '📈 Halverwege! Nog ' + remaining + ' verzekeringen te gaan';
+        } else if (percentDisplay >= 25) {
+            pizzaStatus.innerHTML = '💪 Goede start! Nog ' + remaining + ' te gaan';
+        } else {
+            pizzaStatus.innerHTML = '📊 Nog ' + remaining + ' verzekeringen te gaan voor het doel';
+        }
+        
+        const progressBar = document.getElementById('progressBar');
+        if (percentDisplay >= 100) {
+            progressBar.style.background = 'linear-gradient(90deg, #ff0000, #ff6600, #ffcc00)';
+        } else if (percentDisplay >= 75) {
+            progressBar.style.background = 'linear-gradient(90deg, #ff6b35, #ff8c42)';
+        } else if (percentDisplay >= 50) {
+            progressBar.style.background = 'linear-gradient(90deg, #ff8c42, #ffaa00)';
+        } else {
+            progressBar.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)';
+        }
+    }
+    
+    function showPizzaParty() {
+        pizzaPartyActive = true;
+        for (let i = 0; i < 30; i++) {
+            setTimeout(() => {
+                const pizza = document.createElement('div');
+                pizza.className = 'pizza-emoji';
+                pizza.innerHTML = ['🍕', '🍅', '🧀', '🥩', '🍄', '🫑'][Math.floor(Math.random() * 6)];
+                pizza.style.left = Math.random() * 100 + '%';
+                pizza.style.animationDuration = 2 + Math.random() * 2 + 's';
+                document.body.appendChild(pizza);
+                setTimeout(() => pizza.remove(), 3000);
+            }, i * 100);
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'pizza-party';
+        modal.innerHTML = `
+            <div class="pizza-modal">
+                <h2>🎉🍕 PIZZA PARTY! 🍕🎉</h2>
+                <div class="big-pizza celebration-pizza">🍕</div>
+                <p style="font-size: 24px; margin: 20px;">DOEL BEHAALD!</p>
+                <p style="font-size: 18px; margin: 10px;">Tijd om pizza te bestellen voor het team! 🎊</p>
                 <button class="close-party" onclick="this.closest('.pizza-party').remove(); pizzaPartyActive = false;">🍕 Laten we eten! 🍕</button>
             </div>
         `;
@@ -10,92 +853,42 @@
             return;
         }
         
-        // Check if not exceeding target
-        if (currentSales + pendingUpdates + 1 > currentTarget) {
-            document.getElementById('status').innerHTML = '🎉 DOEL AL BEHAALD! 🎉';
-            document.getElementById('status').style.background = '#fff3cd';
-            setTimeout(() => {
-                document.getElementById('status').innerHTML = '';
-                document.getElementById('status').style.background = '';
-            }, 2000);
-            return;
-        }
-        
-        // Increment pending counter
-        pendingUpdates++;
-        
-        // OPTIMISTIC UPDATE: Update UI instantly
-        const optimisticSales = currentSales + pendingUpdates;
-        document.getElementById('totalSales').innerText = optimisticSales;
-        
-        // Update progress bar optimistically
-        const optimisticPercent = (optimisticSales / currentTarget) * 100;
-        const optimisticPercentDisplay = Math.min(optimisticPercent, 100);
-        document.getElementById('progressBar').style.width = optimisticPercentDisplay + '%';
-        document.getElementById('progressBar').innerHTML = Math.floor(optimisticPercentDisplay) + '%';
-        
-        // Show queue status
-        document.getElementById('status').innerHTML = '⏳ +1! (' + pendingUpdates + ' wachtend)';
-        document.getElementById('status').style.background = '#fff3cd';
-        
-        // Update last seller
-        document.getElementById('lastSeller').innerHTML = '🏆 Laatste punt toegevoegd door: <strong>' + currentUser + '</strong> (˶ᵔ ᵕ ᵔ˶)';
-        
-        // Process the queue if not already processing
-        if (!isProcessing) {
-            processQueue();
-        }
-    }
-    
-    async function processQueue() {
-        if (isProcessing) return;
-        if (pendingUpdates === 0) return;
-        
-        isProcessing = true;
+        const btn = document.getElementById('addButton');
         
         try {
-            // Send ONE update to Google Sheet
             const response = await fetch(SCRIPT_URL + '?action=add&name=' + encodeURIComponent(currentUser));
             const result = await response.text();
             
-            // Decrease pending counter
-            pendingUpdates--;
-            
-            // Refresh actual data from sheet
-            await loadSales();
-            
-            // Update queue status
-            if (pendingUpdates === 0) {
-                document.getElementById('status').innerHTML = '✅ Alle punten opgeslagen in sheet!';
+            if (result === 'TARGET_REACHED') {
+                document.getElementById('status').innerHTML = '🎉🍕 DOEL BEHAALD! PIZZA-TIJD! 🍕🎉';
                 document.getElementById('status').style.background = '#d4edda';
-                
-                setTimeout(() => {
-                    if (document.getElementById('status').innerHTML.includes('opgeslagen')) {
-                        document.getElementById('status').innerHTML = '';
-                        document.getElementById('status').style.background = '';
-                    }
-                }, 2000);
             } else {
-                document.getElementById('status').innerHTML = '✅ Punt opgeslagen! Nog ' + pendingUpdates + ' te verwerken...';
+                document.getElementById('status').innerHTML = '✅ Punt toegevoegd door ' + currentUser + '! Goed bezig';
                 document.getElementById('status').style.background = '#d4edda';
+                document.getElementById('lastSeller').innerHTML = '🏆 Laatste punt toegevoegd door: <strong>' + currentUser + '</strong> (˶ᵔ ᵕ ᵔ˶)';
+                await loadSales();
             }
             
-            // Check if target was reached
-            if (currentSales >= currentTarget && !pizzaPartyActive) {
-                showPizzaParty();
-            }
-            
+            setTimeout(() => {
+                document.getElementById('status').innerHTML = '';
+                document.getElementById('status').style.background = '';
+            }, 3000);
         } catch(error) {
-            console.error('Error saving to sheet:', error);
-            document.getElementById('status').innerHTML = '❌ Fout bij opslaan: ' + error.message;
+            document.getElementById('status').innerHTML = 'Error: ' + error.message;
             document.getElementById('status').style.background = '#f8d7da';
-        } finally {
-            isProcessing = false;
-            // Process next in queue
-            if (pendingUpdates > 0) {
-                processQueue();
-            }
         }
+        
+        setTimeout(() => {
+            if (btn) {
+                btn.style.transform = '';
+                btn.style.background = 'white';
+                btn.style.borderColor = currentTheme.primary;
+                btn.style.color = currentTheme.primary;
+                const span = btn.querySelector('span');
+                if (span) span.style.opacity = '1';
+                btn.blur();
+            }
+        }, 150);
     }
     
     function logout() {
@@ -108,23 +901,8 @@
         applyTheme(STANDARD_THEME);
     }
     
-    // Initialize everything
     applyTheme(STANDARD_THEME);
     createNameButtons();
-    
-    // Start connection checking
-    checkConnection();
-    connectionCheckInterval = setInterval(checkConnection, 30000);
-    
-    // Load cached data immediately while fetching fresh data
-    loadLastKnownSales();
-    
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', function() {
-        if (connectionCheckInterval) {
-            clearInterval(connectionCheckInterval);
-        }
-    });
 </script>
 </body>
 </html>
