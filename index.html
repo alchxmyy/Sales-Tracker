@@ -1,4 +1,4 @@
-                <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Verzekerings Tracker</title>
@@ -28,20 +28,21 @@
             z-index: 100;
             display: flex;
             align-items: center;
-            padding: 0 30px;
+            justify-content: center;
         }
         
         .logo-container {
             position: absolute;
-            left: 30px;
+            left: 50%;
             top: 50%;
-            transform: translateY(-50%);
+            transform: translate(-50%, -50%);
         }
         
         .logo-container img {
             height: 50px;
             width: auto;
             display: block;
+            filter: brightness(0) invert(1);
         }
         
         /* Fake search bar in the middle */
@@ -71,7 +72,7 @@
             color: #999;
         }
         
-        /* Thin Black Bar (1/3 height of red bar) */
+        /* Thin Black Bar */
         .black-bar {
             background: #1a1a1a;
             position: fixed;
@@ -481,6 +482,66 @@
             to { opacity: 1; }
         }
         
+        /* Connection Status Indicator */
+        .connection-status {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 12px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .status-dot.green {
+            background-color: #4CAF50;
+            box-shadow: 0 0 5px #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.red {
+            background-color: #f44336;
+            box-shadow: 0 0 5px #f44336;
+        }
+        
+        .status-dot.yellow {
+            background-color: #ff9800;
+            box-shadow: 0 0 5px #ff9800;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.5; transform: scale(1); }
+        }
+        
+        .status-text {
+            color: #333;
+        }
+        
+        .saved-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+        
         @media (max-width: 768px) {
             .name-btn {
                 height: 44px;
@@ -495,7 +556,6 @@
             }
             .top-red-bar {
                 height: 60px;
-                padding: 0 15px;
             }
             .logo-container img {
                 height: 35px;
@@ -514,41 +574,7 @@
                 padding: 8px 12px;
                 font-size: 12px;
             }
-            .top-red-bar {
-            background: #b8000f;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 80px;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-
-        .logo-container {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .logo-container img {
-            height: 50px;
-            width: auto;
-            display: block;
-            filter: brightness(0) invert(1);  /* Forces white color */
-        }
-
-        /* Fallback text if image doesn't load */
-        .logo-fallback {
-            display: none;
-            color: white;
-            font-weight: bold;
-            font-size: 20px;
-        }
-    }
     </style>
 </head>
 <body id="mainBody">
@@ -560,13 +586,11 @@
         <div style="display: none; color: white; font-weight: bold; font-size: 20px;">📺 MEDIAMARKT</div>
     </div>
     
-    <!-- Fake search bar in the middle -->
     <div class="fake-search">
         <input type="text" class="search-input" placeholder="Zoek producten, merken of categorieën" readonly>
     </div>
 </div>
 
-<!-- Thin Black Bar (1/3 height of red bar: 80px/3 ≈ 27px) -->
 <div class="black-bar"></div>
 
 <!-- Welcome Screen -->
@@ -622,6 +646,12 @@
     </div>
 </div>
 
+<!-- Connection Status Indicator -->
+<div class="connection-status" id="connectionStatus">
+    <div class="status-dot" id="statusDot"></div>
+    <span class="status-text" id="statusText">Checking connection...</span>
+</div>
+
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3HayGpQQmkkuBUnTc8eUJyTCC0E5cO1BxkpESAGrsPOdmlSw3LbkcPy-p1E_tUV2y/exec';
     
@@ -656,12 +686,17 @@
         { name: "Jerry", themeKey: "standard" }, { name: "Rakibe", themeKey: "standard" }, { name: "Hidde", themeKey: "H" },
         { name: "Ruben", themeKey: "R" }, { name: "Anouk", themeKey: "A" }, { name: "Shafia", themeKey: "S" }, { name: "Tessa", themeKey: "T" }
     ];
-    
+
+    let connectionCheckInterval = null;
+    let lastSavedSales = 0;
+    let isConnected = false;
     let currentUser = null;
     let currentTarget = 100;
     let currentSales = 0;
     let pizzaPartyActive = false;
     let currentTheme = STANDARD_THEME;
+    let pendingUpdates = 0;
+    let isProcessing = false;
     
     function showLoading() {
         document.getElementById('loadingContainer').style.display = 'block';
@@ -683,7 +718,6 @@
         const addButton = document.getElementById('addButton');
         const lastSeller = document.getElementById('lastSeller');
         
-        // Keep body white for MediaMarkt style
         body.style.background = '#ffffff';
         appHeader.style.border = `2px solid ${theme.primary}`;
         appTitle.style.color = theme.primary;
@@ -774,10 +808,118 @@
             currentSales = parseInt(await response.text());
             document.getElementById('totalSales').innerText = currentSales;
             updateProgress();
-            if (currentSales >= currentTarget && !pizzaPartyActive) showPizzaParty();
+            saveLastKnownSales(currentSales);
+            updateConnectionStatus(true, 'Verbonden');
+            
+            const statusDiv = document.getElementById('status');
+            if (statusDiv && statusDiv.innerHTML.includes('Laatst bekende')) {
+                statusDiv.innerHTML = '';
+                statusDiv.style.background = '';
+            }
+            
+            if (currentSales >= currentTarget && !pizzaPartyActive) {
+                showPizzaParty();
+            }
         } catch(error) {
+            console.error('Error loading sales:', error);
             document.getElementById('status').innerHTML = 'Error loading: ' + error.message;
+            document.getElementById('status').style.background = '#f8d7da';
             document.getElementById('totalSales').innerText = '?';
+            updateConnectionStatus(false, 'Geen verbinding');
+            
+            const cached = loadLastKnownSales();
+            if (cached !== null) {
+                document.getElementById('totalSales').innerText = cached;
+                const percent = (cached / currentTarget) * 100;
+                document.getElementById('progressBar').style.width = Math.min(percent, 100) + '%';
+                document.getElementById('progressBar').innerHTML = Math.floor(Math.min(percent, 100)) + '%';
+            }
+        }
+    }
+    
+    function saveLastKnownSales(sales) {
+        localStorage.setItem('lastKnownSales', sales);
+        localStorage.setItem('lastKnownTime', new Date().toISOString());
+        lastSavedSales = sales;
+    }
+    
+    function loadLastKnownSales() {
+        const saved = localStorage.getItem('lastKnownSales');
+        const savedTime = localStorage.getItem('lastKnownTime');
+        
+        if (saved !== null) {
+            lastSavedSales = parseInt(saved);
+            document.getElementById('totalSales').innerText = lastSavedSales;
+            
+            if (savedTime) {
+                const time = new Date(savedTime);
+                const timeStr = time.toLocaleTimeString();
+                const statusDiv = document.getElementById('status');
+                if (statusDiv && !statusDiv.innerHTML.includes('Bijwerken')) {
+                    statusDiv.innerHTML = `📦 Laatst bekende stand: ${lastSavedSales} (${timeStr}) - Bijwerken...`;
+                    statusDiv.style.background = '#e3f2fd';
+                }
+            }
+            return lastSavedSales;
+        }
+        return null;
+    }
+    
+    function updateConnectionStatus(connected, message = null) {
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        
+        if (!dot || !text) return;
+        
+        if (connected) {
+            dot.className = 'status-dot green';
+            text.innerHTML = (message || 'Verbonden met sheet') + ' <span class="saved-badge">✓ live</span>';
+            isConnected = true;
+        } else {
+            dot.className = 'status-dot red';
+            text.innerHTML = (message || 'Geen verbinding') + ' <span class="saved-badge">⚠ offline</span>';
+            isConnected = false;
+        }
+    }
+    
+    async function checkConnection() {
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        
+        if (!dot || !text) return;
+        
+        dot.className = 'status-dot yellow';
+        text.innerHTML = 'Controleren...';
+        
+        try {
+            const response = await fetch(SCRIPT_URL + '?action=get');
+            if (response.ok) {
+                const sales = await response.text();
+                if (!isNaN(parseInt(sales))) {
+                    updateConnectionStatus(true, 'Verbonden');
+                    return true;
+                } else {
+                    throw new Error('Invalid response');
+                }
+            } else {
+                throw new Error('HTTP error');
+            }
+        } catch(error) {
+            console.error('Connection check failed:', error);
+            updateConnectionStatus(false, 'Geen verbinding');
+            
+            const statusDiv = document.getElementById('status');
+            if (statusDiv && !statusDiv.innerHTML.includes('offline')) {
+                statusDiv.innerHTML = '⚠️ Geen verbinding met Google Sheet. Wijzigingen worden niet opgeslagen!';
+                statusDiv.style.background = '#fff3cd';
+                setTimeout(() => {
+                    if (statusDiv.innerHTML.includes('Geen verbinding')) {
+                        statusDiv.innerHTML = '';
+                        statusDiv.style.background = '';
+                    }
+                }, 5000);
+            }
+            return false;
         }
     }
     
@@ -840,7 +982,7 @@
                 <h2>🎉🍕 PIZZA PARTY! 🍕🎉</h2>
                 <div class="big-pizza celebration-pizza">🍕</div>
                 <p style="font-size: 24px; margin: 20px;">DOEL BEHAALD!</p>
-                <p style="font-size: 18px; margin: 10px;">Tijd om pizza te bestellen voor het team! 🎊</p>
+                <p style="font-size: 18px; margin: 10px;">Tijd om pizza
                 <button class="close-party" onclick="this.closest('.pizza-party').remove(); pizzaPartyActive = false;">🍕 Laten we eten! 🍕</button>
             </div>
         `;
@@ -853,42 +995,92 @@
             return;
         }
         
-        const btn = document.getElementById('addButton');
-        
-        try {
-            const response = await fetch(SCRIPT_URL + '?action=add&name=' + encodeURIComponent(currentUser));
-            const result = await response.text();
-            
-            if (result === 'TARGET_REACHED') {
-                document.getElementById('status').innerHTML = '🎉🍕 DOEL BEHAALD! PIZZA-TIJD! 🍕🎉';
-                document.getElementById('status').style.background = '#d4edda';
-            } else {
-                document.getElementById('status').innerHTML = '✅ Punt toegevoegd door ' + currentUser + '! Goed bezig';
-                document.getElementById('status').style.background = '#d4edda';
-                document.getElementById('lastSeller').innerHTML = '🏆 Laatste punt toegevoegd door: <strong>' + currentUser + '</strong> (˶ᵔ ᵕ ᵔ˶)';
-                await loadSales();
-            }
-            
+        // Check if not exceeding target
+        if (currentSales + pendingUpdates + 1 > currentTarget) {
+            document.getElementById('status').innerHTML = '🎉 DOEL AL BEHAALD! 🎉';
+            document.getElementById('status').style.background = '#fff3cd';
             setTimeout(() => {
                 document.getElementById('status').innerHTML = '';
                 document.getElementById('status').style.background = '';
-            }, 3000);
-        } catch(error) {
-            document.getElementById('status').innerHTML = 'Error: ' + error.message;
-            document.getElementById('status').style.background = '#f8d7da';
+            }, 2000);
+            return;
         }
         
-        setTimeout(() => {
-            if (btn) {
-                btn.style.transform = '';
-                btn.style.background = 'white';
-                btn.style.borderColor = currentTheme.primary;
-                btn.style.color = currentTheme.primary;
-                const span = btn.querySelector('span');
-                if (span) span.style.opacity = '1';
-                btn.blur();
+        // Increment pending counter
+        pendingUpdates++;
+        
+        // OPTIMISTIC UPDATE: Update UI instantly
+        const optimisticSales = currentSales + pendingUpdates;
+        document.getElementById('totalSales').innerText = optimisticSales;
+        
+        // Update progress bar optimistically
+        const optimisticPercent = (optimisticSales / currentTarget) * 100;
+        const optimisticPercentDisplay = Math.min(optimisticPercent, 100);
+        document.getElementById('progressBar').style.width = optimisticPercentDisplay + '%';
+        document.getElementById('progressBar').innerHTML = Math.floor(optimisticPercentDisplay) + '%';
+        
+        // Show queue status
+        document.getElementById('status').innerHTML = '⏳ +1! (' + pendingUpdates + ' wachtend)';
+        document.getElementById('status').style.background = '#fff3cd';
+        
+        // Update last seller
+        document.getElementById('lastSeller').innerHTML = '🏆 Laatste punt toegevoegd door: <strong>' + currentUser + '</strong> (˶ᵔ ᵕ ᵔ˶)';
+        
+        // Process the queue if not already processing
+        if (!isProcessing) {
+            processQueue();
+        }
+    }
+    
+    async function processQueue() {
+        if (isProcessing) return;
+        if (pendingUpdates === 0) return;
+        
+        isProcessing = true;
+        
+        try {
+            // Send ONE update to Google Sheet
+            const response = await fetch(SCRIPT_URL + '?action=add&name=' + encodeURIComponent(currentUser));
+            const result = await response.text();
+            
+            // Decrease pending counter
+            pendingUpdates--;
+            
+            // Refresh actual data from sheet
+            await loadSales();
+            
+            // Update queue status
+            if (pendingUpdates === 0) {
+                document.getElementById('status').innerHTML = '✅ Alle punten opgeslagen in sheet!';
+                document.getElementById('status').style.background = '#d4edda';
+                
+                setTimeout(() => {
+                    if (document.getElementById('status').innerHTML.includes('opgeslagen')) {
+                        document.getElementById('status').innerHTML = '';
+                        document.getElementById('status').style.background = '';
+                    }
+                }, 2000);
+            } else {
+                document.getElementById('status').innerHTML = '✅ Punt opgeslagen! Nog ' + pendingUpdates + ' te verwerken...';
+                document.getElementById('status').style.background = '#d4edda';
             }
-        }, 150);
+            
+            // Check if target was reached
+            if (currentSales >= currentTarget && !pizzaPartyActive) {
+                showPizzaParty();
+            }
+            
+        } catch(error) {
+            console.error('Error saving to sheet:', error);
+            document.getElementById('status').innerHTML = '❌ Fout bij opslaan: ' + error.message;
+            document.getElementById('status').style.background = '#f8d7da';
+        } finally {
+            isProcessing = false;
+            // Process next in queue
+            if (pendingUpdates > 0) {
+                processQueue();
+            }
+        }
     }
     
     function logout() {
@@ -901,8 +1093,23 @@
         applyTheme(STANDARD_THEME);
     }
     
+    // Initialize everything
     applyTheme(STANDARD_THEME);
     createNameButtons();
+    
+    // Start connection checking
+    checkConnection();
+    connectionCheckInterval = setInterval(checkConnection, 30000);
+    
+    // Load cached data immediately while fetching fresh data
+    loadLastKnownSales();
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        if (connectionCheckInterval) {
+            clearInterval(connectionCheckInterval);
+        }
+    });
 </script>
 </body>
 </html>
