@@ -280,8 +280,23 @@
             margin: 20px 0;
         }
         
-        .pizza-progress-bar {
+        /**.pizza-progress-bar {
             background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            height: 35px;
+            border-radius: 22px;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }*/
+
+            .pizza-progress-bar {
+            background: linear-gradient(90deg, #ff0000, #ff3300);  /* Start red */
             height: 35px;
             border-radius: 22px;
             width: 0%;
@@ -575,6 +590,46 @@
                 font-size: 12px;
             }
         }
+        /* Rainbow animation for extra sales */
+        @keyframes rainbowShift {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 200% 50%;
+            }
+        }
+
+            /* Rainbow shimmer effect */
+            .pizza-progress-bar {
+                background-size: 100% 100%;
+                transition: width 0.5s ease, background 0.3s ease;
+            }
+
+            /* When above target, add a subtle glow */
+            @keyframes glowPulse {
+                0% {
+                    box-shadow: 0 0 5px rgba(0,255,0,0.3);
+                }
+                50% {
+                    box-shadow: 0 0 20px rgba(255,0,255,0.5);
+                }
+                100% {
+                    box-shadow: 0 0 5px rgba(0,255,0,0.3);
+                }
+            }
+
+            /* Apply glow when above target */
+            .sales-card:has(.pizza-progress-bar[style*="rainbow"]) .pizza-progress-bar {
+                animation: glowPulse 2s ease infinite;
+            }
+            .bonus-display {
+            font-size: 16px;
+            color: #ff6600;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            }
     </style>
 </head>
 <body id="mainBody">
@@ -633,6 +688,9 @@
             <div class="sales-number" id="salesNumber">
                 <span id="totalSales">0</span> / <span id="targetNumber">100</span>
             </div>
+            <div class="bonus-display" id="bonusDisplay">
+            🎉 Extra: <span id="bonusCount">0</span> boven doel
+            </div>
             
             <button class="btn-add" id="addButton"><span>+1</span></button>
             
@@ -653,7 +711,9 @@
 </div>
 
 <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3HayGpQQmkkuBUnTc8eUJyTCC0E5cO1BxkpESAGrsPOdmlSw3LbkcPy-p1E_tUV2y/exec';
+
+    let currentBonus = 0;
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysnlaXGLmc1qrOVrSh6yaOqQQtn9F12FET8k9VBqW66hCOuaBEzCmOEvE0zeenc3L6/exec';
     
     const PERSON_THEMES = {
         "J": { primary: "#9b59b6", secondary: "#8e44ad", light: "#f3e5f5", text: "#6c3483", background: "#ffffff" },
@@ -802,7 +862,7 @@
         }
     }
     
-    async function loadSales() {
+    /*async function loadSales() {
         try {
             const response = await fetch(SCRIPT_URL + '?action=get');
             currentSales = parseInt(await response.text());
@@ -835,7 +895,22 @@
                 document.getElementById('progressBar').innerHTML = Math.floor(Math.min(percent, 100)) + '%';
             }
         }
-    }
+    }*/
+        async function loadSales() {
+            try {
+                const response = await fetch(SCRIPT_URL + '?action=get');
+                const total = parseInt(await response.text());
+                currentSales = total;
+                currentBonus = Math.max(0, total - currentTarget);
+                document.getElementById('totalSales').innerText = currentSales;
+                document.getElementById('bonusCount').innerText = currentBonus;
+                updateProgress();
+                
+                // ... rest of code
+            } catch(error) {
+                // ... error handling
+            }
+        }
     
     function saveLastKnownSales(sales) {
         localStorage.setItem('lastKnownSales', sales);
@@ -923,7 +998,7 @@
         }
     }
     
-    function updateProgress() {
+    /*function updateProgress() { //old prgress
         const percent = (currentSales / currentTarget) * 100;
         const percentDisplay = Math.min(percent, 100);
         document.getElementById('progressBar').style.width = percentDisplay + '%';
@@ -959,7 +1034,67 @@
         } else {
             progressBar.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)';
         }
+    }*/
+
+        function updateProgress() {
+    // Show actual percentage, but cap progress bar at 100%
+    const percent = Math.min((currentSales / currentTarget) * 100, 100);
+    const percentDisplay = Math.min(percent, 100);
+    document.getElementById('progressBar').style.width = percentDisplay + '%';
+    document.getElementById('progressBar').innerHTML = Math.floor(percentDisplay) + '%';
+    
+    const remaining = Math.max(0, currentTarget - currentSales);
+    const remainingElement = document.getElementById('remainingCount');
+    if (remainingElement) remainingElement.innerText = remaining;
+    
+    const targetDisplay = document.getElementById('targetDisplay');
+    if (targetDisplay) targetDisplay.innerText = currentTarget;
+    
+    const pizzaStatus = document.getElementById('pizzaStatus');
+    if (currentSales >= currentTarget) {
+        const overTarget = currentSales - currentTarget;
+        pizzaStatus.innerHTML = '🎉 DOEL BEHAALD! 🎉 🍕 PIZZA TIJD! 🍕 (' + overTarget + ' extra verzekeringen!)';
+    } else if (percent >= 75) {
+        pizzaStatus.innerHTML = '🍕 Nog ' + remaining + ' te gaan! Jullie zijn er bijna! 🍕';
+    } else if (percent >= 50) {
+        pizzaStatus.innerHTML = '📈 Halverwege! Nog ' + remaining + ' verzekeringen te gaan';
+    } else if (percent >= 25) {
+        pizzaStatus.innerHTML = '💪 Goede start! Nog ' + remaining + ' te gaan';
+    } else {
+        pizzaStatus.innerHTML = '📊 Nog ' + remaining + ' verzekeringen te gaan voor het doel';
     }
+    
+    // PROGRESS BAR COLORS
+    const progressBar = document.getElementById('progressBar');
+    
+    if (currentSales >= currentTarget) {
+        // FULL RAINBOW when above target!
+        progressBar.style.background = `linear-gradient(90deg, 
+            #ff0000, #ff6600, #ffcc00, #66ff66, #00ccff, #6600ff, #ff00cc, #ff0000)`;
+        progressBar.style.backgroundSize = '300% 100%';
+        progressBar.style.animation = 'rainbowShift 2s linear infinite';
+    } else if (percent <= 25) {
+        // 0-25%: Red to Orange-Red
+        progressBar.style.background = 'linear-gradient(90deg, #ff0000, #ff3300)';
+        progressBar.style.animation = 'none';
+        progressBar.style.backgroundSize = '100% 100%';
+    } else if (percent <= 50) {
+        // 25-50%: Orange to Yellow-Orange
+        progressBar.style.background = 'linear-gradient(90deg, #ff6600, #ff9900)';
+        progressBar.style.animation = 'none';
+        progressBar.style.backgroundSize = '100% 100%';
+    } else if (percent <= 75) {
+        // 50-75%: Yellow to Yellow-Green
+        progressBar.style.background = 'linear-gradient(90deg, #ffcc00, #99cc00)';
+        progressBar.style.animation = 'none';
+        progressBar.style.backgroundSize = '100% 100%';
+    } else {
+        // 75-100%: Yellow-Green to Green
+        progressBar.style.background = 'linear-gradient(90deg, #66cc00, #00cc00)';
+        progressBar.style.animation = 'none';
+        progressBar.style.backgroundSize = '100% 100%';
+    }
+}  
     
     function showPizzaParty() {
         pizzaPartyActive = true;
@@ -989,14 +1124,14 @@
         document.body.appendChild(modal);
     }
     
-    async function addSale() {
+    /*async function addSale() {
         if (!currentUser) {
             alert('Selecteer eerst je naam');
             return;
         }
         
         // Check if not exceeding target
-        if (currentSales + pendingUpdates + 1 > currentTarget) {
+       /// if (currentSales + pendingUpdates + 1 > currentTarget) {
             document.getElementById('status').innerHTML = '🎉 DOEL AL BEHAALD! 🎉';
             document.getElementById('status').style.background = '#fff3cd';
             setTimeout(() => {
@@ -1005,7 +1140,6 @@
             }, 2000);
             return;
         }
-        
         // Increment pending counter
         pendingUpdates++;
         
@@ -1030,7 +1164,74 @@
         if (!isProcessing) {
             processQueue();
         }
+    }*/
+        async function addSale() {
+    if (!currentUser) {
+        alert('Selecteer eerst je naam');
+        return;
     }
+    
+    // REMOVE the target limit check - allow going above target
+    // Just show a celebration message when target is reached
+    
+    // Increment pending counter
+    pendingUpdates++;
+    
+    // OPTIMISTIC UPDATE: Update UI instantly
+    const optimisticSales = currentSales + pendingUpdates;
+    document.getElementById('totalSales').innerText = optimisticSales;
+    
+    // Update progress bar (cap at 100% for visual but show number above)
+    /**const optimisticPercent = Math.min((optimisticSales / currentTarget) * 100, 100);
+    const optimisticPercentDisplay = Math.min(optimisticPercent, 100);
+    document.getElementById('progressBar').style.width = optimisticPercentDisplay + '%';
+    document.getElementById('progressBar').innerHTML = Math.floor(optimisticPercentDisplay) + '%';*/
+
+       // Set color based on optimistic percentage
+const progressBar = document.getElementById('progressBar');
+if (optimisticSales >= currentTarget) {
+    // FULL RAINBOW when above target!
+    progressBar.style.background = `linear-gradient(90deg, 
+        #ff0000, #ff6600, #ffcc00, #66ff66, #00ccff, #6600ff, #ff00cc, #ff0000)`;
+    progressBar.style.backgroundSize = '300% 100%';
+    progressBar.style.animation = 'rainbowShift 2s linear infinite';
+} else if (optimisticPercent <= 25) {
+    progressBar.style.background = 'linear-gradient(90deg, #ff0000, #ff3300)';
+    progressBar.style.animation = 'none';
+    progressBar.style.backgroundSize = '100% 100%';
+} else if (optimisticPercent <= 50) {
+    progressBar.style.background = 'linear-gradient(90deg, #ff6600, #ff9900)';
+    progressBar.style.animation = 'none';
+    progressBar.style.backgroundSize = '100% 100%';
+} else if (optimisticPercent <= 75) {
+    progressBar.style.background = 'linear-gradient(90deg, #ffcc00, #99cc00)';
+    progressBar.style.animation = 'none';
+    progressBar.style.backgroundSize = '100% 100%';
+} else {
+    progressBar.style.background = 'linear-gradient(90deg, #66cc00, #00cc00)';
+    progressBar.style.animation = 'none';
+    progressBar.style.backgroundSize = '100% 100%';
+}
+    
+    // Show queue status - add celebration if target reached
+    if (currentSales < currentTarget && optimisticSales >= currentTarget) {
+        document.getElementById('status').innerHTML = '🎉🍕 DOEL BEHAALD! PIZZA-TIJD! Nog ' + pendingUpdates + ' extra te verwerken... 🍕🎉';
+        document.getElementById('status').style.background = '#d4edda';
+        if (!pizzaPartyActive) showPizzaParty();
+    } else {
+        document.getElementById('status').innerHTML = '⏳ +1! (' + pendingUpdates + ' wachtend)';
+        document.getElementById('status').style.background = '#fff3cd';
+    }
+    
+    // Update last seller
+    document.getElementById('lastSeller').innerHTML = '🏆 Laatste punt toegevoegd door: <strong>' + currentUser + '</strong> (˶ᵔ ᵕ ᵔ˶)';
+    
+    // Process the queue if not already processing
+    if (!isProcessing) {
+        processQueue();
+    }
+}
+        
     
     async function processQueue() {
         if (isProcessing) return;
